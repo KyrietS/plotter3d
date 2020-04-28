@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="author" content="Sebastian Fojcik">
+    <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
+    <title>Plot 3D</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/jquery.range.css">
+    <link rel="stylesheet" href="css/pretty-checkbox.css">
+</head>
+<body onload="init();">
+
+<main>
+    <div id="container">
+        <div style="position: relative;" id="canvasContainer">
+            <canvas id="canvas-2d" width="800" height="500" tabindex="1" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+            <canvas id="canvas-3d" width="800" height="500" style="left: 0; top: 0; z-index: 1;"></canvas>
+        </div>
+        <div id="myForm">
+            <label for="console"></label>
+            <input type="text" name="console" id="console" placeholder="Formula, ex. x + sin(y)"/>
+            <br>
+            <button id="execute" onclick="execute();">Draw</button>
+            <button onclick="reset();">Clear</button>
+            <button style="float: right;" onclick="example5();">Ex.5</button>
+            <button style="float: right;" onclick="example4();">Ex.4</button>
+            <button style="float: right;" onclick="example3();">Ex.3</button>
+            <button style="float: right;" onclick="example2();">Ex.2</button>
+            <button style="float: right;" onclick="example1();">Ex.1</button>
+            <br>
+            <table id="error-table">
+                <tr>
+                    <td><img src="img/error.png" alt="error" class="error-icon"></td>
+                    <td><p class="error">Formula contains syntax errors.</p></td>
+                </tr>
+            </table>
+
+        </div>
+    </div>
+    <aside id="help">
+        <table>
+            <thead>
+            <tr>
+                <td colspan="2">Manual</td>
+            </tr>
+            <tr>
+                <td>Command</td>
+                <td>Description</td>
+            </tr>
+            </thead>
+            <tr>
+                <td><code>x</code></td>
+                <td>variable x</td>
+            </tr>
+            <tr>
+                <td><code>y</code></td>
+                <td>variable y</td>
+            </tr>
+            <tr>
+                <td><code>+ - * /</code></td>
+                <td>arithmetic operations</td>
+            </tr>
+            <tr>
+                <td><code>sin(_)</code></td>
+                <td>sinus function</td>
+            </tr>
+            <tr>
+                <td><code>cos(_)</code></td>
+                <td>cosinus function</td>
+            </tr>
+            <tr>
+                <td><code>tan(_)</code></td>
+                <td>tangent function</td>
+            </tr>
+            <tr>
+                <td><code>sqrt(_)</code></td>
+                <td>square root function</td>
+            </tr>
+            <tr>
+                <td><code>pow(a, n)</code></td>
+                <td><i>a</i> to the power <i>n</i></td>
+            </tr>
+            <tr>
+                <td><code>log(_)</code></td>
+                <td>natural logarithm</td>
+            </tr>
+            <tr>
+                <td><code>log2(_)</code></td>
+                <td>base 2 logarithm</td>
+            </tr>
+            <tr>
+                <td><code>Math.*</code></td>
+                <td>any other JavaScript math function</td>
+            </tr>
+        </table>
+
+        <strong>Graph effect</strong><br>
+        <div style="height:10px;"></div>
+        <div class="pretty p-default p-thick p-pulse">
+            <input type="checkbox" id="fog-checkbox"/>
+            <div class="state p-success ">
+                <label for="fog-checkbox">Fog</label>
+            </div>
+        </div>
+        <div class="pretty p-default p-thick p-pulse">
+            <input type="checkbox" id="thermal-checkbox"/>
+            <div class="state p-success ">
+                <label for="thermal-checkbox">Thermal</label>
+            </div>
+        </div>
+        <div class="pretty p-default p-thick p-pulse">
+            <input type="checkbox" id="lighting-checkbox"/>
+            <div class="state p-success ">
+                <label for="lighting-checkbox">Lighting</label>
+            </div>
+        </div>
+        <div class="pretty p-default p-thick p-pulse">
+            <input type="checkbox" id="y0-checkbox" checked/>
+            <div class="state p-success ">
+                <label for="y0-checkbox">y = 0</label>
+            </div>
+        </div>
+        <div style="height:20px;"></div>
+
+        <strong>Graph style</strong><br>
+        <div style="height:10px;"></div>
+        <div class="pretty p-switch p-fill">
+            <input type="radio" name="graph-style" id="style-plane-radio" checked/>
+            <div class="state p-success">
+                <label for="style-plane-radio">Plane</label>
+            </div>
+        </div>
+        <div class="pretty p-switch p-fill">
+            <input type="radio" name="graph-style" id="style-lines-radio" />
+            <div class="state p-success">
+                <label for="style-lines-radio">Lines</label>
+            </div>
+        </div>
+        <div class="pretty p-switch p-fill">
+            <input type="radio" name="graph-style" id="style-dots-radio" />
+            <div class="state p-success">
+                <label for="style-dots-radio">Dots</label>
+            </div>
+        </div>
+        <div style="height:20px;"></div>
+
+        <strong>Density: </strong>
+        <input type="hidden" id="density-chooser" value="250" />
+        <strong>Range: </strong>
+        <input type="hidden" id="range-chooser" value="-5,5" />
+        <strong>Scale: </strong>
+        <input type="hidden" id="scale-chooser" value="1.0" />
+
+        <p>Rotate the camera by holding <strong>Left Mouse Button</strong> over canvas.</p>
+        <p>Zoom the view using <strong>Scroll</strong>.</p>
+
+
+    </aside>
+</main>
+
+
+<script src="js/lib/gl-matrix.js"></script>
+<script src="js/lib/jquery-min.js"></script>
+<script src="js/lib/jquery.range.js"></script>
+<script src="js/Shaders.js"></script>
+<script src="js/WebGL.js"></script>
+<script src="js/Graph.js"></script>
+<script src="js/Plane.js"></script>
+<script src="js/World.js"></script>
+<script src="js/main.js"></script>
+<script src="js/Controls.js"></script>
+</body>
+</html>
